@@ -1,0 +1,8 @@
+aws_region         = "ap-southeast-1"
+project_name       = "goldenowl"
+state_bucket_prefix = "goldenowl-terraform-state"
+
+additional_tags = {
+  Owner   = "Golden Owl Assessment"
+  Purpose = "Terraform Remote State"
+}

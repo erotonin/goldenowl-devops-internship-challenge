@@ -1,0 +1,9 @@
+terraform {
+  backend "s3" {
+    bucket       = "replace-after-bootstrap"
+    key          = "goldenowl/bootstrap/terraform.tfstate"
+    region       = "ap-southeast-1"
+    encrypt      = true
+    use_lockfile = true
+  }
+}
