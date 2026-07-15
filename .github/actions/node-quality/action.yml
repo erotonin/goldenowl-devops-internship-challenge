@@ -1,0 +1,43 @@
+name: Node quality gates
+description: Install dependencies and run application quality gates
+
+inputs:
+  node-version:
+    description: Node.js version
+    required: false
+    default: 24.14.1
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: src/package-lock.json
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: src
+      run: npm ci --no-audit --no-fund
+
+    - name: Check formatting
+      shell: bash
+      working-directory: src
+      run: npm run format:check
+
+    - name: Check linting
+      shell: bash
+      working-directory: src
+      run: npm run lint:check
+
+    - name: Run tests
+      shell: bash
+      working-directory: src
+      run: npm test -- --ci --coverage
+
+    - name: Audit production dependencies
+      shell: bash
+      working-directory: src
+      run: npm audit --omit=dev --audit-level=high

@@ -1,0 +1,50 @@
+name: Deploy ECS task definition
+description: Render and deploy an immutable image to an ECS service
+
+inputs:
+  cluster:
+    description: ECS cluster name
+    required: true
+  service:
+    description: ECS service name
+    required: true
+  task-family:
+    description: ECS task definition family
+    required: true
+  container-name:
+    description: Container name in the task definition
+    required: true
+  image-ref:
+    description: Immutable image digest reference
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Export current task definition
+      shell: bash
+      env:
+        TASK_FAMILY: ${{ inputs.task-family }}
+      run: |
+        aws ecs describe-task-definition \
+          --task-definition "$TASK_FAMILY" \
+          --query taskDefinition \
+          --output json |
+        jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' \
+          > task-definition.json
+
+    - name: Render task definition
+      id: render
+      uses: aws-actions/amazon-ecs-render-task-definition@138c24f321fdbdf7edee4a685519d253cae2cdea
+      with:
+        task-definition: task-definition.json
+        container-name: ${{ inputs.container-name }}
+        image: ${{ inputs.image-ref }}
+
+    - name: Deploy task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@c465972ecbd160473f22e683363b422a5412a3de
+      with:
+        task-definition: ${{ steps.render.outputs.task-definition }}
+        cluster: ${{ inputs.cluster }}
+        service: ${{ inputs.service }}
+        wait-for-service-stability: true

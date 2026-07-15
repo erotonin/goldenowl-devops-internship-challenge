@@ -1,0 +1,12 @@
+aws_region              = "us-east-1"
+project_name            = "goldenowl"
+state_bucket_name       = "goldenowl-terraform-state-ACCOUNT_ID-REGION"
+shared_state_key        = "goldenowl/shared/terraform.tfstate"
+container_image         = "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/goldenowl-app@sha256:APPROVED_IMAGE_DIGEST"
+create_task_execution_role = false
+task_execution_role_arn = "arn:aws:iam::ACCOUNT_ID:role/LabRole"
+task_role_arn           = ""
+
+additional_tags = {
+  Owner = "erotonin"
+}

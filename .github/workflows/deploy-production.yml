@@ -1,0 +1,79 @@
+name: Deploy production
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Promote signed image to production
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: production
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+
+      - name: Authenticate to AWS
+        uses: ./.github/actions/aws-auth
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-arn: ${{ vars.AWS_ROLE_ARN }}
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          role-session-name: goldenowl-production-${{ github.run_id }}
+
+      - name: Resolve approved staging image
+        id: image
+        shell: bash
+        run: |
+          image_ref="$(bash deploy/scripts/get-approved-image.sh "${{ vars.APPROVED_IMAGE_PARAMETER }}")"
+          printf 'image_ref=%s\n' "$image_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Verify image exists
+        shell: bash
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+        run: |
+          digest="${IMAGE_REF##*@}"
+          aws ecr describe-images --repository-name "$REPOSITORY" --image-ids "imageDigest=${digest}" >/dev/null
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22
+
+      - name: Verify staging signature
+        shell: bash
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+        run: |
+          identity="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/.github/workflows/deploy-staging.yml@refs/heads/staging"
+          cosign verify --certificate-identity "$identity" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" "$IMAGE_REF"
+
+      - name: Deploy production service
+        uses: ./.github/actions/ecs-deploy
+        with:
+          cluster: ${{ vars.ECS_CLUSTER }}
+          service: ${{ vars.ECS_SERVICE }}
+          task-family: ${{ vars.ECS_TASK_FAMILY }}
+          container-name: ${{ vars.ECS_CONTAINER_NAME }}
+          image-ref: ${{ steps.image.outputs.image_ref }}
+
+      - name: Run production smoke test
+        shell: bash
+        run: bash deploy/scripts/smoke-test.sh "${{ vars.APP_URL }}"

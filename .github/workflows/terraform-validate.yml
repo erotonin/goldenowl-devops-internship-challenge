@@ -1,0 +1,73 @@
+name: Terraform validation
+
+on:
+  push:
+    branches:
+      - "feature/**"
+    paths:
+      - "infra/**"
+      - ".github/workflows/terraform-*.yml"
+  pull_request:
+    branches:
+      - staging
+      - master
+    paths:
+      - "infra/**"
+      - ".github/workflows/terraform-*.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    name: Terraform format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e
+        with:
+          terraform_version: 1.14.9
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive infra
+
+  validate:
+    name: Validate ${{ matrix.stack }}
+    needs: format
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        stack:
+          - infra/bootstrap
+          - infra/live/shared
+          - infra/live/staging
+          - infra/live/production
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e
+        with:
+          terraform_version: 1.14.9
+
+      - name: Initialize without backend
+        working-directory: ${{ matrix.stack }}
+        run: terraform init -backend=false -input=false
+
+      - name: Validate configuration
+        working-directory: ${{ matrix.stack }}
+        run: terraform validate -no-color
