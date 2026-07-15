@@ -43,8 +43,6 @@ jobs:
       TF_VAR_state_bucket_name: ${{ vars.TF_BACKEND_BUCKET }}
       TF_VAR_container_image: ${{ vars.INITIAL_IMAGE }}
       TF_VAR_task_execution_role_arn: ${{ vars.TASK_EXECUTION_ROLE_ARN }}
-      TF_VAR_task_role_arn: ${{ vars.TASK_ROLE_ARN }}
-      TF_VAR_create_task_execution_role: ${{ vars.CREATE_TASK_EXECUTION_ROLE || 'false' }}
 
     steps:
       - name: Validate confirmation

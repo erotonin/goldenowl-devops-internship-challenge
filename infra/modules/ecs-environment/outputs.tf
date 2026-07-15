@@ -30,7 +30,7 @@ output "application_url" {
 
 output "task_execution_role_arn" {
   description = "Task execution role used by the service."
-  value       = local.execution_role_arn
+  value       = var.task_execution_role_arn
 }
 
 output "alb_security_group_id" {

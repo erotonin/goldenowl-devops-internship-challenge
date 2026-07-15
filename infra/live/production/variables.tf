@@ -26,22 +26,9 @@ variable "container_image" {
   type        = string
 }
 
-variable "create_task_execution_role" {
-  description = "Whether Terraform creates the production task execution role."
-  type        = bool
-  default     = false
-}
-
 variable "task_execution_role_arn" {
-  description = "Learner Lab role ARN used by ECS when role creation is disabled."
+  description = "Learner Lab role ARN used by ECS."
   type        = string
-  default     = ""
-}
-
-variable "task_role_arn" {
-  description = "Optional ECS application task role ARN."
-  type        = string
-  default     = ""
 }
 
 variable "additional_tags" {
