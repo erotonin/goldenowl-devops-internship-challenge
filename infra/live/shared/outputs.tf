@@ -57,3 +57,13 @@ output "ecr_registry_id" {
   description = "AWS account registry ID."
   value       = module.ecr.registry_id
 }
+
+output "github_oidc_provider_arn" {
+  description = "ARN of the GitHub Actions OIDC provider."
+  value       = module.github_oidc.provider_arn
+}
+
+output "github_oidc_provider_url" {
+  description = "URL of the GitHub Actions OIDC provider."
+  value       = module.github_oidc.provider_url
+}

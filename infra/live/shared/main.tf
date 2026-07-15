@@ -37,3 +37,11 @@ module "ecr" {
     Component = "container-registry"
   }
 }
+
+module "github_oidc" {
+  source = "../../modules/github-oidc"
+
+  tags = {
+    Component = "github-oidc"
+  }
+}
