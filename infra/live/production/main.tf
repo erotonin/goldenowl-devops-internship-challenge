@@ -14,7 +14,6 @@ module "environment" {
   source = "../../modules/ecs-environment"
 
   name                    = "${var.project_name}-production"
-  environment             = "production"
   vpc_id                  = data.terraform_remote_state.shared.outputs.vpc_id
   subnet_ids              = data.terraform_remote_state.shared.outputs.public_subnet_ids
   container_image         = var.container_image
