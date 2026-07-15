@@ -13,21 +13,19 @@ data "terraform_remote_state" "shared" {
 module "environment" {
   source = "../../modules/ecs-environment"
 
-  name                       = "${var.project_name}-staging"
-  environment                = "staging"
-  vpc_id                     = data.terraform_remote_state.shared.outputs.vpc_id
-  subnet_ids                 = data.terraform_remote_state.shared.outputs.public_subnet_ids
-  container_image            = var.container_image
-  container_name             = "app"
-  desired_count              = 1
-  minimum_count              = 1
-  maximum_count              = 2
-  autoscaling_cpu_target     = 65
-  scale_out_cooldown         = 60
-  scale_in_cooldown          = 300
-  create_task_execution_role = var.create_task_execution_role
-  task_execution_role_arn    = var.task_execution_role_arn
-  task_role_arn              = var.task_role_arn
+  name                    = "${var.project_name}-staging"
+  environment             = "staging"
+  vpc_id                  = data.terraform_remote_state.shared.outputs.vpc_id
+  subnet_ids              = data.terraform_remote_state.shared.outputs.public_subnet_ids
+  container_image         = var.container_image
+  container_name          = "app"
+  desired_count           = 1
+  minimum_count           = 1
+  maximum_count           = 2
+  autoscaling_cpu_target  = 65
+  scale_out_cooldown      = 60
+  scale_in_cooldown       = 300
+  task_execution_role_arn = var.task_execution_role_arn
 
   tags = {
     Component = "application"
