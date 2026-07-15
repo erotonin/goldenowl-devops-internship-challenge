@@ -19,3 +19,7 @@ terraform.rc
 .env.*
 !.env.example
 *.log
+backend.hcl
+task-definition.json
+task-definition-rendered.json
+sbom-*.spdx.json

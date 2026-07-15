@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region used to store Terraform state."
   type        = string
-  default     = "ap-southeast-1"
+  default     = "us-east-1"
 
   validation {
     condition     = can(regex("^[a-z]{2}(-[a-z]+)+-[0-9]$", var.aws_region))
@@ -43,4 +43,10 @@ variable "additional_tags" {
   description = "Additional tags applied to supported AWS resources."
   type        = map(string)
   default     = {}
+}
+
+variable "state_bucket_force_destroy" {
+  description = "Whether Terraform may delete all state object versions during lab cleanup."
+  type        = bool
+  default     = true
 }

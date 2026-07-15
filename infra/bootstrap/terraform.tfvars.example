@@ -1,6 +1,7 @@
-aws_region         = "ap-southeast-1"
-project_name       = "goldenowl"
-state_bucket_prefix = "goldenowl-terraform-state"
+aws_region                = "us-east-1"
+project_name              = "goldenowl"
+state_bucket_prefix       = "goldenowl-terraform-state"
+state_bucket_force_destroy = true
 
 additional_tags = {
   Owner   = "Golden Owl Assessment"
