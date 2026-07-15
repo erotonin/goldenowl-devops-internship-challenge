@@ -1,0 +1,123 @@
+name: Deploy staging
+
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: staging-deployment
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build, sign, and deploy staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: staging
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+
+      - name: Run quality gates
+        uses: ./.github/actions/node-quality
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+
+      - name: Build image once
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        with:
+          context: src
+          file: src/Dockerfile
+          load: true
+          push: false
+          tags: goldenowl-app:${{ github.sha }}
+          cache-from: type=gha,scope=staging
+          cache-to: type=gha,mode=max,scope=staging
+
+      - name: Scan image and generate SBOM
+        uses: ./.github/actions/container-security
+        with:
+          image-ref: goldenowl-app:${{ github.sha }}
+          artifact-name: sbom-staging-${{ github.sha }}
+
+      - name: Authenticate to AWS
+        uses: ./.github/actions/aws-auth
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-arn: ${{ vars.AWS_ROLE_ARN }}
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          role-session-name: goldenowl-staging-${{ github.run_id }}
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64
+
+      - name: Push immutable image
+        id: image
+        shell: bash
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          remote_image="${REGISTRY}/${REPOSITORY}:${IMAGE_TAG}"
+          if ! aws ecr describe-images --repository-name "$REPOSITORY" --image-ids "imageTag=${IMAGE_TAG}" >/dev/null 2>&1; then
+            docker tag "goldenowl-app:${IMAGE_TAG}" "$remote_image"
+            docker push "$remote_image"
+          fi
+          digest="$(aws ecr describe-images --repository-name "$REPOSITORY" --image-ids "imageTag=${IMAGE_TAG}" --query 'imageDetails[0].imageDigest' --output text)"
+          image_ref="${REGISTRY}/${REPOSITORY}@${digest}"
+          printf 'image_ref=%s\n' "$image_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22
+
+      - name: Sign and verify image
+        shell: bash
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+        run: |
+          identity="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/.github/workflows/deploy-staging.yml@${GITHUB_REF}"
+          if ! cosign verify --certificate-identity "$identity" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" "$IMAGE_REF" >/dev/null 2>&1; then
+            cosign sign --yes "$IMAGE_REF"
+          fi
+          cosign verify --certificate-identity "$identity" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" "$IMAGE_REF"
+
+      - name: Record immutable image
+        shell: bash
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+        run: printf '### Staging image\n\n%s\n' "\`$IMAGE_REF\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Deploy staging service
+        if: ${{ vars.ECS_SERVICE != '' }}
+        uses: ./.github/actions/ecs-deploy
+        with:
+          cluster: ${{ vars.ECS_CLUSTER }}
+          service: ${{ vars.ECS_SERVICE }}
+          task-family: ${{ vars.ECS_TASK_FAMILY }}
+          container-name: ${{ vars.ECS_CONTAINER_NAME }}
+          image-ref: ${{ steps.image.outputs.image_ref }}
+
+      - name: Run staging smoke test
+        if: ${{ vars.ECS_SERVICE != '' }}
+        shell: bash
+        run: bash deploy/scripts/smoke-test.sh "${{ vars.APP_URL }}"
+
+      - name: Approve staging image
+        if: ${{ vars.ECS_SERVICE != '' }}
+        shell: bash
+        env:
+          PARAMETER_NAME: ${{ vars.APPROVED_IMAGE_PARAMETER }}
+          IMAGE_REF: ${{ steps.image.outputs.image_ref }}
+        run: aws ssm put-parameter --name "$PARAMETER_NAME" --type String --value "$IMAGE_REF" --overwrite
