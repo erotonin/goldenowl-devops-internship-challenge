@@ -41,3 +41,21 @@ variable "additional_tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "ecr_repository_name" {
+  description = "Name of the application ECR repository."
+  type        = string
+  default     = "goldenowl-app"
+}
+
+variable "ecr_max_image_count" {
+  description = "Maximum number of images retained in ECR."
+  type        = number
+  default     = 30
+}
+
+variable "ecr_untagged_retention_days" {
+  description = "Number of days untagged images are retained."
+  type        = number
+  default     = 7
+}

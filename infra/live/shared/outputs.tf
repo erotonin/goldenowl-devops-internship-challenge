@@ -37,3 +37,23 @@ output "s3_vpc_endpoint_id" {
   description = "S3 gateway endpoint ID."
   value       = module.network.s3_vpc_endpoint_id
 }
+
+output "ecr_repository_name" {
+  description = "Name of the application ECR repository."
+  value       = module.ecr.repository_name
+}
+
+output "ecr_repository_arn" {
+  description = "ARN of the application ECR repository."
+  value       = module.ecr.repository_arn
+}
+
+output "ecr_repository_url" {
+  description = "URL of the application ECR repository."
+  value       = module.ecr.repository_url
+}
+
+output "ecr_registry_id" {
+  description = "AWS account registry ID."
+  value       = module.ecr.registry_id
+}

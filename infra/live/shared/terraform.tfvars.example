@@ -16,3 +16,7 @@ private_subnet_cidrs = [
 additional_tags = {
   Owner = "erotonin"
 }
+
+ecr_repository_name          = "goldenowl-app"
+ecr_max_image_count          = 30
+ecr_untagged_retention_days  = 7

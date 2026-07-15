@@ -25,3 +25,15 @@ module "network" {
     Component = "network"
   }
 }
+
+module "ecr" {
+  source = "../../modules/ecr"
+
+  repository_name         = var.ecr_repository_name
+  max_image_count         = var.ecr_max_image_count
+  untagged_retention_days = var.ecr_untagged_retention_days
+
+  tags = {
+    Component = "container-registry"
+  }
+}
