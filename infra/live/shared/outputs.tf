@@ -37,28 +37,3 @@ output "ecr_registry_id" {
   description = "AWS account registry ID."
   value       = module.ecr.registry_id
 }
-
-output "github_oidc_provider_arn" {
-  description = "ARN of the GitHub Actions OIDC provider."
-  value       = module.github_oidc.provider_arn
-}
-
-output "github_oidc_provider_url" {
-  description = "URL of the GitHub Actions OIDC provider."
-  value       = module.github_oidc.provider_url
-}
-
-output "staging_deploy_role_arn" {
-  description = "GitHub Actions staging deployment role ARN when OIDC is enabled."
-  value       = module.github_oidc.staging_role_arn
-}
-
-output "production_deploy_role_arn" {
-  description = "GitHub Actions production deployment role ARN when OIDC is enabled."
-  value       = module.github_oidc.production_role_arn
-}
-
-output "approved_image_parameter" {
-  description = "SSM parameter used for artifact promotion."
-  value       = var.approved_image_parameter
-}
