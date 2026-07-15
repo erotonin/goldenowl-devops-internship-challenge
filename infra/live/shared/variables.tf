@@ -49,33 +49,3 @@ variable "ecr_untagged_retention_days" {
   type        = number
   default     = 7
 }
-
-variable "enable_github_oidc" {
-  description = "Whether to create GitHub OIDC deployment roles."
-  type        = bool
-  default     = false
-}
-
-variable "github_repository" {
-  description = "GitHub repository trusted by deployment roles."
-  type        = string
-  default     = "erotonin/goldenowl-devops-internship-challenge"
-}
-
-variable "task_execution_role_arn" {
-  description = "ECS task execution role ARN that deployment workflows may pass."
-  type        = string
-  default     = ""
-}
-
-variable "task_role_arn" {
-  description = "Optional ECS application task role ARN that deployment workflows may pass."
-  type        = string
-  default     = ""
-}
-
-variable "approved_image_parameter" {
-  description = "SSM parameter that stores the staging-approved image digest."
-  type        = string
-  default     = "/goldenowl/staging/approved-image"
-}
