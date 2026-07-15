@@ -10,17 +10,15 @@ backends.
 - Server-side encryption is enabled.
 - Bucket versioning is enabled.
 - Non-TLS requests are denied.
-- Lifecycle protection prevents accidental destruction.
+- Force deletion is configurable and enabled in the lab example for cleanup.
 
 ## Bootstrap sequence
 
 1. Authenticate to the target AWS account.
 2. Run `terraform init`, `terraform validate`, and `terraform plan`.
 3. Apply the reviewed local plan.
-4. Copy `backend.tf.example` to `backend.tf`.
-5. Replace the placeholder bucket name with the Terraform output.
-6. Run `terraform init -migrate-state`.
-7. Verify that the bootstrap state exists in S3.
+4. Copy the bucket output into each live stack's local `backend.hcl`.
+5. Initialize and apply the `shared`, `staging`, and `production` stacks.
 
-The bootstrap configuration starts with local state because an S3 backend cannot
-use a bucket that does not exist yet.
+The bootstrap stack keeps local state because it manages the S3 bucket used by
+the live stacks. Preserve `terraform-lab.tfstate` until the bucket is destroyed.

@@ -1,37 +1,3 @@
-data "aws_iam_policy_document" "ecs_tasks" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role" "execution" {
-  count = var.create_task_execution_role ? 1 : 0
-
-  name               = "${var.name}-ecs-execution"
-  assume_role_policy = data.aws_iam_policy_document.ecs_tasks.json
-
-  tags = merge(var.tags, {
-    Name = "${var.name}-ecs-execution"
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "execution" {
-  count = var.create_task_execution_role ? 1 : 0
-
-  role       = aws_iam_role.execution[0].name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-locals {
-  execution_role_arn = var.create_task_execution_role ? aws_iam_role.execution[0].arn : var.task_execution_role_arn
-}
-
 resource "aws_ecs_cluster" "this" {
   name = var.name
 
@@ -167,8 +133,7 @@ resource "aws_ecs_task_definition" "this" {
   network_mode             = "awsvpc"
   cpu                      = tostring(var.cpu)
   memory                   = tostring(var.memory)
-  execution_role_arn       = local.execution_role_arn
-  task_role_arn            = var.task_role_arn != "" ? var.task_role_arn : null
+  execution_role_arn       = var.task_execution_role_arn
 
   runtime_platform {
     cpu_architecture        = "X86_64"
@@ -229,7 +194,7 @@ resource "aws_ecs_task_definition" "this" {
 
   lifecycle {
     precondition {
-      condition     = local.execution_role_arn != ""
+      condition     = var.task_execution_role_arn != ""
       error_message = "An ECS task execution role ARN is required."
     }
   }

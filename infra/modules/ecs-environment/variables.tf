@@ -99,22 +99,14 @@ variable "scale_in_cooldown" {
   default     = 300
 }
 
-variable "create_task_execution_role" {
-  description = "Whether this module creates an ECS task execution role."
-  type        = bool
-  default     = false
-}
-
 variable "task_execution_role_arn" {
-  description = "Existing ECS task execution role ARN used when role creation is disabled."
+  description = "Existing ECS task execution role ARN."
   type        = string
-  default     = ""
-}
 
-variable "task_role_arn" {
-  description = "Optional application task role ARN."
-  type        = string
-  default     = ""
+  validation {
+    condition     = can(regex("^arn:[^:]+:iam::[0-9]{12}:role/.+$", var.task_execution_role_arn))
+    error_message = "task_execution_role_arn must be a valid IAM role ARN."
+  }
 }
 
 variable "tags" {
