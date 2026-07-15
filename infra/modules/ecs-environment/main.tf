@@ -180,7 +180,7 @@ resource "aws_ecs_task_definition" "this" {
       name                   = var.container_name
       image                  = var.container_image
       essential              = true
-      user                   = "node"
+      user                   = "65532:65532"
       readonlyRootFilesystem = true
       environment = [
         {
@@ -203,8 +203,10 @@ resource "aws_ecs_task_definition" "this" {
       ]
       healthCheck = {
         command = [
-          "CMD-SHELL",
-          "node -e \"fetch('http://127.0.0.1:${var.container_port}${var.health_check_path}').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+          "CMD",
+          "/nodejs/bin/node",
+          "-e",
+          "fetch('http://127.0.0.1:${var.container_port}${var.health_check_path}').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
         interval    = 30
         timeout     = 5
