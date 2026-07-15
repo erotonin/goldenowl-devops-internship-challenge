@@ -1,0 +1,75 @@
+name: Continuous integration
+
+on:
+  push:
+    branches:
+      - "feature/**"
+  pull_request:
+    branches:
+      - staging
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Node quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+
+      - name: Run quality gates
+        uses: ./.github/actions/node-quality
+
+      - name: Upload test coverage
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: test-coverage-${{ github.sha }}
+          path: src/coverage
+          if-no-files-found: ignore
+          retention-days: 7
+
+  container:
+    name: Container quality gates
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5
+        with:
+          dockerfile: src/Dockerfile
+          failure-threshold: warning
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+
+      - name: Build image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        with:
+          context: src
+          file: src/Dockerfile
+          load: true
+          push: false
+          tags: goldenowl-app:${{ github.sha }}
+          cache-from: type=gha,scope=ci
+          cache-to: type=gha,mode=max,scope=ci
+
+      - name: Scan image and generate SBOM
+        uses: ./.github/actions/container-security
+        with:
+          image-ref: goldenowl-app:${{ github.sha }}
+          artifact-name: sbom-ci-${{ github.sha }}
