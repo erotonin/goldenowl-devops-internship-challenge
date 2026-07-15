@@ -18,26 +18,6 @@ output "public_subnet_ids" {
   value       = module.network.public_subnet_ids
 }
 
-output "private_subnet_ids" {
-  description = "Private subnet IDs used by ECS tasks."
-  value       = module.network.private_subnet_ids
-}
-
-output "vpc_endpoint_security_group_id" {
-  description = "Security group attached to interface endpoints."
-  value       = module.network.vpc_endpoint_security_group_id
-}
-
-output "ecr_vpc_endpoint_ids" {
-  description = "ECR interface endpoint IDs."
-  value       = module.network.ecr_vpc_endpoint_ids
-}
-
-output "s3_vpc_endpoint_id" {
-  description = "S3 gateway endpoint ID."
-  value       = module.network.s3_vpc_endpoint_id
-}
-
 output "ecr_repository_name" {
   description = "Name of the application ECR repository."
   value       = module.ecr.repository_name
@@ -66,4 +46,19 @@ output "github_oidc_provider_arn" {
 output "github_oidc_provider_url" {
   description = "URL of the GitHub Actions OIDC provider."
   value       = module.github_oidc.provider_url
+}
+
+output "staging_deploy_role_arn" {
+  description = "GitHub Actions staging deployment role ARN when OIDC is enabled."
+  value       = module.github_oidc.staging_role_arn
+}
+
+output "production_deploy_role_arn" {
+  description = "GitHub Actions production deployment role ARN when OIDC is enabled."
+  value       = module.github_oidc.production_role_arn
+}
+
+output "approved_image_parameter" {
+  description = "SSM parameter used for artifact promotion."
+  value       = var.approved_image_parameter
 }

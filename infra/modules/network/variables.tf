@@ -12,11 +12,6 @@ variable "name_prefix" {
   }
 }
 
-variable "aws_region" {
-  description = "AWS region containing the VPC."
-  type        = string
-}
-
 variable "vpc_cidr" {
   description = "IPv4 CIDR assigned to the VPC."
   type        = string
@@ -53,22 +48,6 @@ variable "public_subnet_cidrs" {
       ])
     )
     error_message = "Exactly two valid public subnet CIDRs must be supplied."
-  }
-}
-
-variable "private_subnet_cidrs" {
-  description = "IPv4 CIDRs for private ECS task subnets."
-  type        = list(string)
-
-  validation {
-    condition = (
-      length(var.private_subnet_cidrs) == 2 &&
-      alltrue([
-        for cidr in var.private_subnet_cidrs :
-        can(cidrnetmask(cidr))
-      ])
-    )
-    error_message = "Exactly two valid private subnet CIDRs must be supplied."
   }
 }
 

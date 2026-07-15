@@ -47,3 +47,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "force_delete" {
+  description = "Whether repository images may be deleted with the repository during lab cleanup."
+  type        = bool
+  default     = true
+}

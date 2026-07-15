@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region used for shared infrastructure."
   type        = string
-  default     = "ap-southeast-1"
+  default     = "us-east-1"
 }
 
 variable "project_name" {
@@ -23,16 +23,6 @@ variable "public_subnet_cidrs" {
   default = [
     "10.0.0.0/24",
     "10.0.1.0/24",
-  ]
-}
-
-variable "private_subnet_cidrs" {
-  description = "IPv4 CIDRs for private ECS task subnets."
-  type        = list(string)
-
-  default = [
-    "10.0.10.0/24",
-    "10.0.11.0/24",
   ]
 }
 
@@ -58,4 +48,34 @@ variable "ecr_untagged_retention_days" {
   description = "Number of days untagged images are retained."
   type        = number
   default     = 7
+}
+
+variable "enable_github_oidc" {
+  description = "Whether to create GitHub OIDC deployment roles."
+  type        = bool
+  default     = false
+}
+
+variable "github_repository" {
+  description = "GitHub repository trusted by deployment roles."
+  type        = string
+  default     = "erotonin/goldenowl-devops-internship-challenge"
+}
+
+variable "task_execution_role_arn" {
+  description = "ECS task execution role ARN that deployment workflows may pass."
+  type        = string
+  default     = ""
+}
+
+variable "task_role_arn" {
+  description = "Optional ECS application task role ARN that deployment workflows may pass."
+  type        = string
+  default     = ""
+}
+
+variable "approved_image_parameter" {
+  description = "SSM parameter that stores the staging-approved image digest."
+  type        = string
+  default     = "/goldenowl/staging/approved-image"
 }
