@@ -1,0 +1,45 @@
+name: Container security gates
+description: Scan repository and image, then generate an SBOM
+
+inputs:
+  image-ref:
+    description: Local or remote image reference
+    required: true
+  artifact-name:
+    description: SBOM artifact name
+    required: false
+    default: sbom
+
+runs:
+  using: composite
+  steps:
+    - name: Scan repository secrets
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+      with:
+        scan-type: fs
+        scan-ref: .
+        scanners: secret
+        format: table
+        exit-code: 1
+        version: v0.69.3
+
+    - name: Scan image vulnerabilities
+      uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+      with:
+        image-ref: ${{ inputs.image-ref }}
+        scanners: vuln
+        vuln-type: os,library
+        severity: HIGH,CRITICAL
+        ignore-unfixed: true
+        format: table
+        exit-code: 1
+        version: v0.69.3
+
+    - name: Generate SBOM
+      uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
+      with:
+        image: ${{ inputs.image-ref }}
+        format: spdx-json
+        output-file: sbom-${{ inputs.artifact-name }}.spdx.json
+        artifact-name: ${{ inputs.artifact-name }}
+        upload-artifact: true
