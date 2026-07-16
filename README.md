@@ -2,12 +2,6 @@
 
 This repository contains my solution for the Golden Owl DevOps Internship technical assessment. The existing Node.js service is packaged as a Docker image, tested with GitHub Actions, stored in Amazon ECR, and deployed to Amazon ECS Fargate.
 
-The application response is unchanged:
-
-```json
-{"message":"Welcome warriors to Golden Owl!"}
-```
-
 ## Deployment evidence
 
 The staging and production endpoints were verified through separate Application Load Balancers. The screenshots are kept in the repository because the AWS Academy Learner Lab endpoints are temporary.
